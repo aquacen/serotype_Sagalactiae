@@ -1,0 +1,102 @@
+#!/bin/bash
+
+DBPATH="./";
+
+usage(){
+    echo "AQUACEN (c) 2017 - version 0.5";
+    echo "Usage: $0 file [-nv]"
+    echo " file can be:"
+    echo " - fasta";
+    echo " - multi-fasta";
+    echo
+    echo "nv parameter to disable verbose mode.";
+    echo
+    echo "To create or updateDB run: $0 -makedb";
+    echo
+    exit 0;
+}
+
+createDB(){
+    makeblastdb -dbtype nucl -in serotypes.fasta
+    exit 0;
+}
+
+[[ $# -lt 1 ]] && usage
+[[ "$1" == "-makedb" ]] && createDB
+
+FILE=$1
+VERBOSE="1";
+if [ "$2" == "-nv" ]; then
+    VERBOSE="0";
+else
+    echo "Algorithm like Capsular Typing Method for Streptococcus agalactiae";
+    echo "Using Whole Genome Sequence Data. doi: 10.1128/JCM.03142-15";
+    echo "Blastn: evalue 1e-100; 95% of identity; 90% of sequence length."
+    echo "AQUACEN (c) 2016 v 0.1"
+    echo
+fi
+
+[[ "$VERBOSE" == 1 ]] && echo $FILE
+
+get_values(){
+    hit=`echo $1`
+    
+    sseqid="";
+    sstart="";
+    send="";
+    slen="";
+    length="";
+    pident="";
+    mismatch="";
+    gaps="";
+    evalue="";
+    
+    final="";
+
+    for aux in $hit; do
+	if [ "$sseqid" == "" ]; then
+	    sseqid=$aux;
+	elif [ "$sstart" == "" ]; then
+	    sstart=$aux;
+	elif [ "$send" == "" ]; then
+	    send=$aux;
+	elif [ "$slen" == "" ]; then
+	    slen=$aux;
+	elif [ "$length" == "" ]; then
+	    length=$aux;
+	elif [ "$pident" == "" ]; then
+	    pident=$aux;
+	elif [ "$mismatch" == "" ]; then
+	    mismatch=$aux;
+	elif [ "$gaps" == "" ]; then
+	    gaps=$aux;
+	elif [ "$evalue" == "" ]; then
+	    evalue=$aux;
+	else
+	    if [ "$final" == "" ]; then
+		final="$aux";
+	    else
+		final="$final $aux";
+	    fi
+	fi
+    done
+    
+    echo $final
+
+    eval "$2=$sseqid";
+    eval "$3=$sstart";
+    eval "$4=$send";
+    eval "$5=$slen";
+    eval "$6=$length";
+    eval "$7=$pident";
+    eval "$8=$mismatch";
+    eval "$9=$gaps";
+    eval "${10}=$evalue";
+    eval "${11}=$final";
+}
+
+FMT="6 sseqid sstart send slen length pident mismatch gaps evalue"
+[[ "$VERBOSE" == 1 ]] && echo $FMT
+
+blastn -query $FILE -outfmt "$FMT" -evalue 1e-100 -db ${DBPATH}serotypes.fasta -out /tmp/serotypeSaga.r
+awk '$5/$4>0.9 && $6>95 {print $_}' /tmp/serotypeSaga.r
