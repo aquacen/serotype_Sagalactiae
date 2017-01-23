@@ -16,4 +16,4 @@ Blastn: evalue 1e-100; 95% of identity; 90% of sequence length.
 
 1. NCBI-Blast+ Stand alone (makeblastdb and blastn): ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 
-2. wget, sed, and grep
+2. awk
